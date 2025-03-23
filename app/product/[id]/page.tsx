@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from "next/image"
 import { Heart, ExternalLink, Star, BarChart3, TrendingUp } from "lucide-react"
-import { NextPage } from "next"
 
 // Mock product data
 const product = {
@@ -42,18 +41,12 @@ const product = {
   ],
 }
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams?: Record<string, string | string[] | undefined>;
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export function generateStaticParams() {
-  return [{ id: '1' }]
-}
-
-const Page: NextPage<PageProps> = ({ params }) => {
+export default function Page({ params }: Props) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -232,5 +225,3 @@ const Page: NextPage<PageProps> = ({ params }) => {
     </div>
   )
 }
-
-export default Page
