@@ -8,7 +8,9 @@ export interface Product {
 
 export async function searchProducts(query: string): Promise<Product[]> {
   try {
-    const response = await fetch(`http://localhost:8000/api/search/${encodeURIComponent(query)}`);
+    const response = await fetch(`http://localhost:8000/api/search/${encodeURIComponent(query)}`, {
+      method: 'GET'
+    });
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }

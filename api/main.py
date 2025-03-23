@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 import requests
 import os
 from dotenv import load_dotenv
@@ -8,6 +8,12 @@ app = Flask(__name__)
 
 # Load environment variables
 load_dotenv()
+
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 def search_amazon(query: str) -> List[Dict[str, Any]]:
     url = "https://amazon-online-data-api.p.rapidapi.com/search"
@@ -44,8 +50,9 @@ def search_amazon(query: str) -> List[Dict[str, Any]]:
     return products
 
 def search_flipkart(query: str) -> List[Dict[str, Any]]:
-    affiliate_id = os.getenv("FLIPKART_AFFILIATE_ID", "davisdbli")
-    affiliate_token = os.getenv("FLIPKART_AFFILIATE_TOKEN", "8610912bba0e49c6b934e1baccc7e6df")
+    
+    affiliate_id = "davisdbli"
+    affiliate_token = "8610912bba0e49c6b934e1baccc7e6df"
     url = "https://affiliate-api.flipkart.net/affiliate/1.0/search.json"
     
     headers = {
@@ -53,6 +60,8 @@ def search_flipkart(query: str) -> List[Dict[str, Any]]:
         "Fk-Affiliate-Token": affiliate_token
     }
     
+
+    # Define request parameters
     params = {
         "query": query,
         "resultCount": 5
@@ -66,22 +75,24 @@ def search_flipkart(query: str) -> List[Dict[str, Any]]:
     products = []
     
     for item in data.get("products", []):
-        try:
-            price = float(item.get("price", "0").replace("₹", "").replace(",", ""))
-            products.append({
-                "title": item.get("productTitle", ""),
-                "price": price,
-                "image_url": item.get("imageUrl", ""),
-                "product_url": item.get("productUrl", ""),
-                "source": "flipkart"
-            })
-        except (ValueError, AttributeError):
-            continue
+        product_info = item.get("productBaseInfoV1", {})
+        print(product_info.get("imageUrls", {}).get("200x200", "").replace("200", "2112"))
+        products.append({
+            "title": product_info.get("title", ""),
+            "price": product_info.get("flipkartSellingPrice", {}).get("amount", 0.0),
+            "image_url": product_info.get("imageUrls", {}).get("200x200", "").replace("200", "2112"),
+            "product_url": product_info.get("productUrl", ""),
+            "source": "flipkart"
+        })
             
     return products
 
-@app.route("/api/search/<query>")
+@app.route("/api/search/<query>", methods=['GET', 'OPTIONS'])
 def search_products(query: str):
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         # Search on Amazon
         amazon_results = search_amazon(query)
@@ -90,14 +101,13 @@ def search_products(query: str):
         flipkart_results = search_flipkart(query)
         
         # Combine results
-        results = amazon_results + flipkart_results
+        results = flipkart_results + amazon_results
         
-        # Enable CORS
-        response = jsonify(results)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        return response
+        response = make_response(jsonify(results))
+        return add_cors_headers(response)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        response = make_response(jsonify({"error": str(e)}), 500)
+        return add_cors_headers(response)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)
