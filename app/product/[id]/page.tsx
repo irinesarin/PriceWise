@@ -41,13 +41,11 @@ const product = {
   ],
 }
 
-interface ProductPageProps {
-  params: { id: string }
+export function generateStaticParams() {
+  return [{ id: '1' }]
 }
 
-const ProductPage = ({ params }: ProductPageProps) => {
-  const { id } = params;
-
+export default function Page({ params }: { params: { id: string } }) {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -226,5 +224,3 @@ const ProductPage = ({ params }: ProductPageProps) => {
     </div>
   )
 }
-
-export default ProductPage
