@@ -41,14 +41,16 @@ const product = {
   ],
 }
 
-interface PageProps {
-  params: {
+type PageProps = {
+  params: Promise<{
     id: string
-  }
+  }>
   searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-export default async function ProductPage({ params, searchParams }: PageProps) {
+export default async function ProductPage(props: PageProps) {
+  const { id } = await props.params;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
