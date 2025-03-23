@@ -44,15 +44,17 @@ def search_amazon(query: str) -> List[Dict[str, Any]]:
     return products
 
 def search_flipkart(query: str) -> List[Dict[str, Any]]:
-    affiliate_id = os.getenv("FLIPKART_AFFILIATE_ID", "davisdbli")
-    affiliate_token = os.getenv("FLIPKART_AFFILIATE_TOKEN", "8610912bba0e49c6b934e1baccc7e6df")
+
+    affiliate_id = "davisdbli"
+    affiliate_token = "8610912bba0e49c6b934e1baccc7e6df"
     url = "https://affiliate-api.flipkart.net/affiliate/1.0/search.json"
     
     headers = {
         "Fk-Affiliate-Id": affiliate_id,
         "Fk-Affiliate-Token": affiliate_token
     }
-    
+
+    # Define request parameters
     params = {
         "query": query,
         "resultCount": 5
@@ -66,17 +68,15 @@ def search_flipkart(query: str) -> List[Dict[str, Any]]:
     products = []
     
     for item in data.get("products", []):
-        try:
-            price = float(item.get("price", "0").replace("₹", "").replace(",", ""))
-            products.append({
-                "title": item.get("productTitle", ""),
-                "price": price,
-                "image_url": item.get("imageUrl", ""),
-                "product_url": item.get("productUrl", ""),
-                "source": "flipkart"
-            })
-        except (ValueError, AttributeError):
-            continue
+        product_info = item.get("productBaseInfoV1", {})
+        print(product_info.get("imageUrls", {}).get("200x200", "").replace("200", "2112"))
+        products.append({
+            "title": product_info.get("title", ""),
+            "price": product_info.get("flipkartSellingPrice", {}).get("amount", 0.0),
+            "image_url": product_info.get("imageUrls", {}).get("200x200", "").replace("200", "2112"),
+            "product_url": product_info.get("productUrl", ""),
+            "source": "flipkart"
+        })
             
     return products
 
