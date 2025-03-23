@@ -1,49 +1,89 @@
+'use client';
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import ProductGrid from "@/components/product-grid"
-import { SearchIcon } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { useState } from "react"
+import { searchProducts } from "@/lib/api"
+import type { Product } from "@/lib/api"
+import Image from "next/image"
+import { ExternalLink } from "lucide-react"
 
 export default function Home() {
+  const [query, setQuery] = useState("")
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const handleSearch = async () => {
+    if (!query.trim()) return
+    
+    setLoading(true)
+    try {
+      const results = await searchProducts(query)
+      setProducts(results)
+    } catch (error) {
+      console.error('Error searching:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col items-center justify-center space-y-6 mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-center">Compare Prices Across Platforms</h1>
-        <p className="text-xl text-center text-muted-foreground max-w-2xl">
-          Find the best deals on your favorite products from Amazon, Flipkart, and more.
+    <main className="flex min-h-screen flex-col items-center p-8">
+      <h1 className="text-4xl font-bold mb-8">PriceWise</h1>
+      
+      <div className="flex w-full max-w-2xl gap-4 mb-8">
+        <Input
+          type="text"
+          placeholder="Search for products..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+        />
+        <Button onClick={handleSearch} disabled={loading}>
+          {loading ? 'Searching...' : 'Search'}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl">
+        {products.map((product, index) => (
+          <Card key={index} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex gap-4">
+                <div className="relative w-32 h-32">
+                  <Image
+                    src={product.image_url || '/placeholder.svg'}
+                    alt={product.title}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-2 line-clamp-2">{product.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg font-bold">₹{product.price.toLocaleString()}</span>
+                    <span className="text-sm text-muted-foreground capitalize">on {product.source}</span>
+                  </div>
+                  <a
+                    href={product.product_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                  >
+                    View on {product.source} <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {products.length === 0 && !loading && (
+        <p className="text-muted-foreground mt-8">
+          Search for products to see price comparisons
         </p>
-
-        <div className="w-full max-w-2xl flex items-center space-x-2">
-          <form action="/search" className="flex w-full items-center space-x-2">
-            <Input type="text" name="query" placeholder="Search for products..." className="flex-1" required />
-            <Button type="submit">
-              <SearchIcon className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </form>
-        </div>
-      </div>
-
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Popular Categories</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {["Electronics", "Fashion", "Home & Kitchen", "Books"].map((category) => (
-            <Link
-              href={`/search?query=${category}`}
-              key={category}
-              className="bg-primary/5 hover:bg-primary/10 transition-colors rounded-lg p-6 text-center"
-            >
-              <h3 className="font-medium text-lg">{category}</h3>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Trending Products</h2>
-        <ProductGrid />
-      </div>
-    </div>
+      )}
+    </main>
   )
 }
-
