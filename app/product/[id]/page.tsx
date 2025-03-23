@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from "next/image"
 import { Heart, ExternalLink, Star, BarChart3, TrendingUp } from "lucide-react"
+import type { Metadata } from "next"
 
 // Mock product data
 const product = {
@@ -41,7 +42,15 @@ const product = {
   ],
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+type Props = {
+  params: {
+    id: string
+  }
+}
+
+export default async function ProductPage({ params }: Props) {
+  const { id } = params;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
